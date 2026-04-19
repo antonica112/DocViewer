@@ -11,7 +11,10 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
                 <MenuItem Header="Open" Click="OpenFile_Click"/>
-                <MenuItem Header="Save" Click="SaveFile_Click"/>
+                <MenuItem Header="Save" Click="SaveFile_Click" x:Name="SaveMenuItem" Visibility="Collapsed"/>
+                <MenuItem Header="Save As" Click="SaveFileAs_Click" x:Name="SaveAsMenuItem" Visibility="Collapsed"/>
+                <Separator/>
+                <MenuItem Header="Close" Click="CloseFile_Click" x:Name="CloseMenuItem" Visibility="Collapsed"/>
             </MenuItem>
 
             <MenuItem Header="Edit" Click="ToggleEditMode_Click"/>

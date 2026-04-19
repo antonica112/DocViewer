@@ -50,7 +50,6 @@ You can open a file in two ways:
 - Edit support:
   - `.txt` → plain text editor
   - `.csv` → table/grid editor
-  - `.pdf` → view only (no edit/save support)
 
 - Drag & drop file opening
 
