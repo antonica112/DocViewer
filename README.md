@@ -11,6 +11,35 @@ The project is designed for personal use, focusing on simplicity, extensibility,
 
 ---
 
+## 🧭 How to Use
+
+### 📂 Opening a File
+
+You can open a file in two ways:
+
+* Use the menu: **File → Open**
+* Drag and drop a file directly into the application window
+
+---
+
+### ✏️ Editing
+
+* Click the **Edit** button to toggle **Edit Mode**
+* Editing is currently supported for:
+
+  * `.txt`
+  * `.csv`
+
+---
+
+### 💾 Saving
+
+* Press **Ctrl + S**
+* Or use the menu: **File → Save**
+
+---
+
+
 ## ✨ Features
 
 * Open and view multiple file types:
@@ -83,5 +112,15 @@ Test Explorer → Run All
 * Improved CSV parsing
 * Search within documents
 * Recent files / history
+* Save As (saving in a different file)
+
+---
+
+---
+
+## 🔮 Known issues
+
+* Drag & Drop multiple times doesn't work (Windows default 'open file' behavior kicks in)
+* 
 
 ---
