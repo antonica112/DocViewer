@@ -1,4 +1,4 @@
-﻿namespace DocViewer.Constants
+﻿namespace DocViewer.Core.Constants
 {
     public static class Enums
     {

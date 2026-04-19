@@ -1,6 +1,4 @@
-﻿using static DocViewer.Constants.Enums;
-
-namespace DocViewer.Core
+﻿namespace DocViewer.Core
 {
     public interface IDocumentAdapter
     {

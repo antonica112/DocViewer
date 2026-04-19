@@ -1,12 +1,9 @@
-﻿using DocViewer.Constants;
-using DocViewer.Core;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Text;
 
-namespace DocViewer.Adapters
+namespace DocViewer.Core.Adapters
 {
-    internal class CsvAdapter : IDocumentAdapter
+    public class CsvAdapter : IDocumentAdapter
     {
         public bool CanHandle(string extension)
             => extension.Equals(".csv", StringComparison.OrdinalIgnoreCase);

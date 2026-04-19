@@ -1,8 +1,4 @@
-﻿using DocViewer.Constants;
-using DocViewer.Core;
-using System.IO;
-
-namespace DocViewer.Adapters
+﻿namespace DocViewer.Core.Adapters
 {
     public class ImageAdapter : IDocumentAdapter
     {

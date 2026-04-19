@@ -1,9 +1,6 @@
-﻿using DocViewer.Constants;
-using DocViewer.Core;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 
-namespace DocViewer.Adapters
+namespace DocViewer.Core.Adapters
 {
     public class TxtAdapter : IDocumentAdapter
     {

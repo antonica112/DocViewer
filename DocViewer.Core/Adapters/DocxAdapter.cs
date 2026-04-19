@@ -1,10 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
-using DocViewer.Constants;
-using DocViewer.Core;
 using OpenXmlPowerTools;
-using System.IO;
 
-namespace DocViewer.Adapters
+namespace DocViewer.Core.Adapters
 {
     public class DocxAdapter : IDocumentAdapter
     {
@@ -43,40 +40,6 @@ namespace DocViewer.Adapters
                 {html}
                 </body>
                 </html>";
-            }
-
-        //public string ConvertToHtml(string filePath)
-        //{
-        //    using var fileStream = File.OpenRead(filePath);
-        //    using var memoryStream = new MemoryStream();
-
-        //    fileStream.CopyTo(memoryStream);
-        //    memoryStream.Position = 0;
-
-        //    using var doc = WordprocessingDocument.Open(memoryStream, true);
-
-        //    var settings = new HtmlConverterSettings()
-        //    {
-        //        PageTitle = "Document"
-        //    };
-
-        //    var html = HtmlConverter.ConvertToHtml(doc, settings);
-
-        //    return html.ToString();
-        //}
-
-        //public string ConvertToHtml(string filePath)
-        //{
-        //    using var doc = WordprocessingDocument.Open(filePath, true);
-
-        //    var settings = new HtmlConverterSettings()
-        //    {
-        //        PageTitle = "Document"
-        //    };
-
-        //    var html = HtmlConverter.ConvertToHtml(doc, settings);
-
-        //    return html.ToString();
-        //}
+        }
     }
 }

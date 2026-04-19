@@ -1,59 +1,45 @@
-﻿using DocViewer.Adapters;
-using DocViewer.Core;
+﻿using DocViewer.Core;
+using DocViewer.Core.Adapters;
+using DocViewer.Core.Interfaces;
+using DocViewer.Core.Services;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using static DocViewer.Constants.Enums;
+using static DocViewer.Core.Constants.Enums;
 
 namespace DocViewer;
 
 public partial class MainWindow : Window
 {
-    private readonly List<IDocumentAdapter> _adapters;
-
     private string? _currentFilePath;
-    private IDocumentAdapter? _currentAdapter;
     private bool _isEditMode = false;
     private FileType _fileType = FileType.Unsupported;
+
+    private readonly IDocumentService _documentService;
 
     public MainWindow()
     {
         InitializeComponent();
 
-        _adapters = new List<IDocumentAdapter>
+        _documentService = new DocumentService(new IDocumentAdapter[]
         {
             new DocxAdapter(),
             new TxtAdapter(),
             new CsvAdapter(),
             new ImageAdapter()
-        };
-    }
-
-    private async void OpenFile_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "All files (*.*)|*.*"
-        };
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        await OpenFile(dialog.FileName);
+        });
     }
 
     private void LoadContentIntoEditor(string filePath)
     {
         if (_fileType == FileType.Txt)
         {
-            // Load into editor too
             TextEditor.Text = File.ReadAllText(filePath);
         }
 
         if (_fileType == FileType.Csv)
         {
-            // Load into grid editor too
             LoadCsvIntoGrid(filePath);
         }
     }
@@ -68,28 +54,6 @@ public partial class MainWindow : Window
             ".png" or ".jpg" or ".jpeg" => FileType.Image,
             _ => FileType.Unsupported
         };
-    }
-
-    private void SaveFile_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentFilePath == null)
-            return;
-
-        if (!_isEditMode)
-        {
-            MessageBox.Show("Switch to Edit mode to save changes.");
-            return;
-        }
-
-        if (_fileType == FileType.Unsupported)
-        {
-            MessageBox.Show("File is not supported!");
-            return;
-        }
-
-        SaveFile();
-
-        MessageBox.Show("File saved!");
     }
 
     private void SaveFile()
@@ -141,10 +105,10 @@ public partial class MainWindow : Window
         CsvGrid.Visibility = Visibility.Collapsed;
         Browser.Visibility = Visibility.Visible;
 
-        if (_currentFilePath == null || _currentAdapter == null)
+        if (_currentFilePath == null || _documentService == null)
             return;
 
-        var html = _currentAdapter.ConvertToHtml(_currentFilePath);
+        var html = _documentService.ConvertToHtml(_currentFilePath);
 
         await Browser.EnsureCoreWebView2Async();
         Browser.NavigateToString(html);
@@ -209,21 +173,6 @@ public partial class MainWindow : Window
         CsvGrid.ItemsSource = table.DefaultView;
     }
 
-    private async void Window_Drop(object sender, DragEventArgs e)
-    {
-        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
-            return;
-
-        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-
-        if (files.Length == 0)
-            return;
-
-        var filePath = files[0];
-
-        await OpenFile(filePath);
-    }
-
     private async Task OpenFile(string filePath)
     {
         var ext = Path.GetExtension(filePath);
@@ -236,10 +185,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var adapter = _adapters.FirstOrDefault(a => a.CanHandle(ext));
-
         _currentFilePath = filePath;
-        _currentAdapter = adapter;
         _isEditMode = false;
 
         try
@@ -256,6 +202,42 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void OpenFile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "All files (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        await OpenFile(dialog.FileName);
+    }
+
+    private void SaveFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentFilePath == null)
+            return;
+
+        if (!_isEditMode)
+        {
+            MessageBox.Show("Switch to Edit mode to save changes.");
+            return;
+        }
+
+        if (_fileType == FileType.Unsupported)
+        {
+            MessageBox.Show("File is not supported!");
+            return;
+        }
+
+        SaveFile();
+
+        MessageBox.Show("File saved!");
+    }
+
+    // Toggle between view and edit modes for available types
     private async void ToggleEditMode_Click(object sender, RoutedEventArgs e)
     {
         if (_currentFilePath == null)
@@ -271,6 +253,23 @@ public partial class MainWindow : Window
         }
     }
 
+    // Handle file open by drag & drop
+    private async void Window_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            return;
+
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+        if (files.Length == 0)
+            return;
+
+        var filePath = files[0];
+
+        await OpenFile(filePath);
+    }
+
+    // Handle Ctrl+S for saving
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)

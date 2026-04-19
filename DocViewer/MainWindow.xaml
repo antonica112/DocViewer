@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Document Viewer" Height="600" Width="1000"
-        AllowDrop="True" Drop="Window_Drop"
+        AllowDrop="True" 
+        Drop="Window_Drop"
         KeyDown="Window_KeyDown">
 
     <DockPanel>
@@ -18,7 +19,7 @@
 
         <Grid>
             <!-- WebView (VIEW mode) -->
-            <wv2:WebView2 x:Name="Browser"/>
+            <wv2:WebView2 x:Name="Browser" />
 
             <!-- Text editor (EDIT mode) -->
             <TextBox x:Name="TextEditor"
