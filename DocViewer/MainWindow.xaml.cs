@@ -16,15 +16,19 @@ public partial class MainWindow : Window
 
         _adapters = new List<IDocumentAdapter>
         {
-            new DocxAdapter()
+            new DocxAdapter(),
+            new TxtAdapter(),
+            new CsvAdapter(),
+            new ImageAdapter()
         };
     }
 
     private async void OpenFile_Click(object sender, RoutedEventArgs e)
     {
         var extensions = _adapters
-            .Select(a => "*.docx")
-            .Distinct();
+        .Select(a => "*.docx")
+        .Select(a => "*.txt")
+        .Distinct();
 
         var filter = $"Supported Files ({string.Join(";", extensions)})|{string.Join(";", extensions)}|All Files (*.*)|*.*";
 
@@ -43,15 +47,21 @@ public partial class MainWindow : Window
 
         if (adapter == null)
         {
-            MessageBox.Show("'GetExpenses()'");
+            MessageBox.Show($"File exteion {ext} not supported!");
             return;
         }
 
-        var html = adapter.ConvertToHtml(filePath);
+        try
+        {
+            var html = adapter.ConvertToHtml(filePath);
+            await Browser.EnsureCoreWebView2Async();
+            Browser.NavigateToString(html);
 
-        await Browser.EnsureCoreWebView2Async();
-        Browser.NavigateToString(html);
-
-        Title = $"DocViewer - {Path.GetFileName(filePath)}";
+            Title = $"DocViewer - {Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error opening file:\n{ex.Message}");
+        }
     }
 }
