@@ -18,6 +18,8 @@ public partial class MainWindow : Window
 
     private readonly IDocumentService _documentService;
 
+    public bool IsFileOpen => _currentFilePath != null;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -60,6 +62,9 @@ public partial class MainWindow : Window
 
     private void SaveFile()
     {
+        if (_currentFilePath == null)
+            return;
+
         switch (_fileType)
         {
             case FileType.Txt:
@@ -103,6 +108,8 @@ public partial class MainWindow : Window
     {
         _isEditMode = false;
 
+        UpdateTitle();
+
         TextEditor.Visibility = Visibility.Collapsed;
         CsvGrid.Visibility = Visibility.Collapsed;
         Browser.Visibility = Visibility.Visible;
@@ -135,6 +142,7 @@ public partial class MainWindow : Window
         {
             TextEditor.Visibility = Visibility.Visible;
             _isEditMode = true;
+            UpdateTitle();
             return;
         }
 
@@ -142,6 +150,7 @@ public partial class MainWindow : Window
         {
             CsvGrid.Visibility = Visibility.Visible;
             _isEditMode = true;
+            UpdateTitle();
             return;
         }
 
@@ -198,15 +207,20 @@ public partial class MainWindow : Window
 
         try
         {
-            Title = $"DocViewer - {Path.GetFileName(_currentFilePath)}" + (_isEditMode ? " [EDIT]" : "");
+            UpdateTitle();
 
             LoadContentIntoEditor(filePath);
 
             await ShowViewMode();
+
+            ToggleFileButtons(true);
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error opening file:\n{ex.Message}");
+
+            _currentFilePath = null;
+            _isEditMode = false;
         }
     }
 
@@ -225,24 +239,63 @@ public partial class MainWindow : Window
 
     private void SaveFile_Click(object sender, RoutedEventArgs e)
     {
-        if (_currentFilePath == null)
-            return;
-
-        if (!_isEditMode)
+        if (_currentFilePath == null || _fileType == FileType.Unsupported)
         {
-            MessageBox.Show("Switch to Edit mode to save changes.");
-            return;
-        }
-
-        if (_fileType == FileType.Unsupported)
-        {
-            MessageBox.Show("File is not supported!");
+            MessageBox.Show("No file is open / File type (extension) is NOT supported.");
             return;
         }
 
         SaveFile();
 
         MessageBox.Show("File saved!");
+    }
+
+    private void SaveFileAs_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentFilePath == null || _fileType == FileType.Unsupported)
+        {
+            MessageBox.Show("No file is open / File type (extension) is NOT supported.");
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            FileName = Path.GetFileName(_currentFilePath),
+            Filter = GetSaveFilter()
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        if (string.IsNullOrWhiteSpace(dialog.FileName))
+        {
+            MessageBox.Show("Selected FilePath not valid.");
+            return;
+        }
+
+        _currentFilePath = dialog.FileName;
+
+        SaveFile();
+
+        UpdateTitle();
+
+        MessageBox.Show("File saved!");
+    }
+
+    private async void CloseFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isEditMode)
+        {
+            var result = MessageBox.Show(
+                "You are in Edit Mode. Close anyway?",
+                "Warning",
+                MessageBoxButton.YesNo);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+        }
+
+        await CloseCurrentFile();
     }
 
     // Toggle between view and edit modes for available types
@@ -285,5 +338,72 @@ public partial class MainWindow : Window
             SaveFile_Click(sender, e);
             e.Handled = true;
         }
+    }
+
+    private async Task CloseCurrentFile()
+    {
+        _currentFilePath = null;
+        _isEditMode = false;
+
+        // Reset UI
+        TextEditor.Text = string.Empty;
+        TextEditor.Visibility = Visibility.Collapsed;
+
+        CsvGrid.ItemsSource = null;
+        CsvGrid.Visibility = Visibility.Collapsed;
+
+        Browser.Visibility = Visibility.Visible;
+
+        await Browser.EnsureCoreWebView2Async();
+
+        // Clear WebView content
+        Browser.NavigateToString("<html><body></body></html>");
+
+        // Reset title
+        UpdateTitle();
+
+        ToggleFileButtons(false);
+    }
+
+    /// <summary>
+    /// Toggles the file buttons (Save, Save As, Close) visibility
+    /// </summary>
+    /// <param name="visible"></param>
+    private void ToggleFileButtons(bool visible)
+    {
+        if (visible)
+        {
+            SaveMenuItem.Visibility = Visibility.Visible;
+            SaveAsMenuItem.Visibility = Visibility.Visible;
+            CloseMenuItem.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SaveMenuItem.Visibility = Visibility.Collapsed;
+            SaveAsMenuItem.Visibility = Visibility.Collapsed;
+            CloseMenuItem.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private string GetSaveFilter()
+    {
+        if (_currentFilePath == null)
+            return "All files (*.*)|*.*";
+
+        var ext = Path.GetExtension(_currentFilePath).ToLower();
+
+        return ext switch
+        {
+            ".txt" => "Text file (*.txt)|*.txt",
+            ".csv" => "CSV file (*.csv)|*.csv",
+            _ => "All files (*.*)|*.*"
+        };
+    }
+
+    private void UpdateTitle()
+    {
+        if(string.IsNullOrWhiteSpace(_currentFilePath))
+            Title = "DocViewer";
+        else Title = $"DocViewer - {Path.GetFileName(_currentFilePath)}" + (_isEditMode ? " [EDIT]" : "");
     }
 }
