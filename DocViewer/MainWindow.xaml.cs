@@ -3,12 +3,19 @@ using DocViewer.Core;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
+using static DocViewer.Constants.Enums;
 
 namespace DocViewer;
 
 public partial class MainWindow : Window
 {
     private readonly List<IDocumentAdapter> _adapters;
+
+    private string? _currentFilePath;
+    private IDocumentAdapter? _currentAdapter;
+    private bool _isEditMode = false;
+    private FileType _fileType = FileType.Unsupported;
 
     public MainWindow()
     {
@@ -25,43 +32,251 @@ public partial class MainWindow : Window
 
     private async void OpenFile_Click(object sender, RoutedEventArgs e)
     {
-        var extensions = _adapters
-        .Select(a => "*.docx")
-        .Select(a => "*.txt")
-        .Distinct();
-
-        var filter = $"Supported Files ({string.Join(";", extensions)})|{string.Join(";", extensions)}|All Files (*.*)|*.*";
-
         var dialog = new OpenFileDialog
         {
-            Filter = filter
+            Filter = "All files (*.*)|*.*"
         };
 
         if (dialog.ShowDialog() != true)
             return;
 
-        var filePath = dialog.FileName;
-        var ext = Path.GetExtension(filePath);
+        await OpenFile(dialog.FileName);
+    }
 
-        var adapter = _adapters.FirstOrDefault(a => a.CanHandle(ext));
-
-        if (adapter == null)
+    private void LoadContentIntoEditor(string filePath)
+    {
+        if (_fileType == FileType.Txt)
         {
-            MessageBox.Show($"File exteion {ext} not supported!");
+            // Load into editor too
+            TextEditor.Text = File.ReadAllText(filePath);
+        }
+
+        if (_fileType == FileType.Csv)
+        {
+            // Load into grid editor too
+            LoadCsvIntoGrid(filePath);
+        }
+    }
+
+    private void SetFileType(string extension)
+    {
+        _fileType = extension.ToLower() switch
+        {
+            ".docx" => FileType.Docx,
+            ".txt" => FileType.Txt,
+            ".csv" => FileType.Csv,
+            ".png" or ".jpg" or ".jpeg" => FileType.Image,
+            _ => FileType.Unsupported
+        };
+    }
+
+    private void SaveFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentFilePath == null)
+            return;
+
+        if (!_isEditMode)
+        {
+            MessageBox.Show("Switch to Edit mode to save changes.");
             return;
         }
 
+        if (_fileType == FileType.Unsupported)
+        {
+            MessageBox.Show("File is not supported!");
+            return;
+        }
+
+        SaveFile();
+
+        MessageBox.Show("File saved!");
+    }
+
+    private void SaveFile()
+    {
+        switch (_fileType)
+        {
+            case FileType.Txt:
+                File.WriteAllText(_currentFilePath!, TextEditor.Text);
+                break;
+            case FileType.Csv:
+                SaveCsv();
+                break;
+            default:
+                MessageBox.Show("Save not supported for this file type.");
+                break;
+        }
+    }
+
+    private void SaveCsv()
+    {
+        var view = CsvGrid.ItemsSource as System.Data.DataView;
+        if (view == null) return;
+
+        var table = view.Table;
+
+        var lines = new List<string>();
+
+        // headers
+        var headers = table.Columns.Cast<System.Data.DataColumn>()
+            .Select(c => c.ColumnName);
+
+        lines.Add(string.Join(",", headers));
+
+        // rows
+        foreach (System.Data.DataRow row in table.Rows)
+        {
+            var values = row.ItemArray.Select(v => v?.ToString() ?? "");
+            lines.Add(string.Join(",", values));
+        }
+
+        File.WriteAllLines(_currentFilePath!, lines);
+    }
+
+    private async Task ShowViewMode()
+    {
+        _isEditMode = false;
+
+        TextEditor.Visibility = Visibility.Collapsed;
+        CsvGrid.Visibility = Visibility.Collapsed;
+        Browser.Visibility = Visibility.Visible;
+
+        if (_currentFilePath == null || _currentAdapter == null)
+            return;
+
+        var html = _currentAdapter.ConvertToHtml(_currentFilePath);
+
+        await Browser.EnsureCoreWebView2Async();
+        Browser.NavigateToString(html);
+    }
+
+    private void ShowEditMode()
+    {
+        if (_currentFilePath == null)
+            return;
+
+        Browser.Visibility = Visibility.Collapsed;
+        TextEditor.Visibility = Visibility.Collapsed;
+        CsvGrid.Visibility = Visibility.Collapsed;
+
+        if (_fileType == FileType.Txt)
+        {
+            TextEditor.Visibility = Visibility.Visible;
+            _isEditMode = true;
+            return;
+        }
+
+        if (_fileType == FileType.Csv)
+        {
+            CsvGrid.Visibility = Visibility.Visible;
+            _isEditMode = true;
+            return;
+        }
+
+        MessageBox.Show("Edit mode not supported for this file type.");
+    }
+
+    private void LoadCsvIntoGrid(string filePath)
+    {
+        var lines = File.ReadAllLines(filePath);
+
+        var table = new System.Data.DataTable();
+
+        if (lines.Length == 0)
+            return;
+
+        var headers = lines[0].Split(',');
+
+        foreach (var header in headers)
+        {
+            table.Columns.Add(header);
+        }
+
+        foreach (var line in lines.Skip(1))
+        {
+            var values = line.Split(',');
+
+            var row = table.NewRow();
+
+            for (int i = 0; i < table.Columns.Count; i++)
+            {
+                row[i] = i < values.Length ? values[i] : "";
+            }
+
+            table.Rows.Add(row);
+        }
+
+        CsvGrid.ItemsSource = table.DefaultView;
+    }
+
+    private async void Window_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            return;
+
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+        if (files.Length == 0)
+            return;
+
+        var filePath = files[0];
+
+        await OpenFile(filePath);
+    }
+
+    private async Task OpenFile(string filePath)
+    {
+        var ext = Path.GetExtension(filePath);
+
+        SetFileType(ext);
+
+        if (_fileType == FileType.Unsupported)
+        {
+            MessageBox.Show($"File type {ext} is not supported!");
+            return;
+        }
+
+        var adapter = _adapters.FirstOrDefault(a => a.CanHandle(ext));
+
+        _currentFilePath = filePath;
+        _currentAdapter = adapter;
+        _isEditMode = false;
+
         try
         {
-            var html = adapter.ConvertToHtml(filePath);
-            await Browser.EnsureCoreWebView2Async();
-            Browser.NavigateToString(html);
+            Title = $"DocViewer - {Path.GetFileName(_currentFilePath)}" + (_isEditMode ? " [EDIT]" : "");
 
-            Title = $"DocViewer - {Path.GetFileName(filePath)}";
+            LoadContentIntoEditor(filePath);
+
+            await ShowViewMode();
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error opening file:\n{ex.Message}");
+        }
+    }
+
+    private async void ToggleEditMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentFilePath == null)
+            return;
+
+        if (_isEditMode)
+        {
+            await ShowViewMode();
+        }
+        else
+        {
+            ShowEditMode();
+        }
+    }
+
+    private void Window_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
+        {
+            SaveFile_Click(sender, e);
+            e.Handled = true;
         }
     }
 }

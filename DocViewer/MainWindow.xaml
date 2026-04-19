@@ -2,15 +2,40 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="Document Viewer" Height="600" Width="1000">
+        Title="Document Viewer" Height="600" Width="1000"
+        AllowDrop="True" Drop="Window_Drop"
+        KeyDown="Window_KeyDown">
 
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
                 <MenuItem Header="Open" Click="OpenFile_Click"/>
+                <MenuItem Header="Save" Click="SaveFile_Click"/>
             </MenuItem>
+
+            <MenuItem Header="Edit" Click="ToggleEditMode_Click"/>
         </Menu>
 
-        <wv2:WebView2 x:Name="Browser"/>
+        <Grid>
+            <!-- WebView (VIEW mode) -->
+            <wv2:WebView2 x:Name="Browser"/>
+
+            <!-- Text editor (EDIT mode) -->
+            <TextBox x:Name="TextEditor"
+                 Visibility="Collapsed"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 FontFamily="Consolas"
+                 FontSize="14"/>
+
+            <!-- CSV editor (EDIT MODE) -->
+            <DataGrid x:Name="CsvGrid"
+              Visibility="Collapsed"
+              AutoGenerateColumns="True"
+              CanUserAddRows="True"
+              CanUserDeleteRows="True"/>
+        </Grid>
     </DockPanel>
 </Window>

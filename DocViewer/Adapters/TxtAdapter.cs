@@ -1,4 +1,5 @@
-﻿using DocViewer.Core;
+﻿using DocViewer.Constants;
+using DocViewer.Core;
 using System.IO;
 using System.Net;
 
