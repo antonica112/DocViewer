@@ -17,58 +17,56 @@ The project is designed for personal use, focusing on simplicity, extensibility,
 
 You can open a file in two ways:
 
-* Use the menu: **File → Open**
-* Drag and drop a file directly into the application window
+- Use the menu: **File → Open**
+- Drag and drop a file directly into the application window
 
 ---
 
 ### ✏️ Editing
 
-* Click the **Edit** button to toggle **Edit Mode**
-* Editing is currently supported for:
-
-  * `.txt`
-  * `.csv`
+- Click the **Edit** button to toggle **Edit Mode**
+- Editing is currently supported for:
+  - `.txt`
+  - `.csv`
 
 ---
 
 ### 💾 Saving
 
-* Press **Ctrl + S**
-* Or use the menu: **File → Save**
+- Press **Ctrl + S**
+- Or use the menu: **File → Save**
 
 ---
 
-
 ## ✨ Features
 
-* Open and view multiple file types:
+- Open and view multiple file types:
+  - `.docx` (rendered as HTML)
+  - `.txt`
+  - `.csv`
+  - `.png`, `.jpg`
+  - `.pdf` (viewer/reader only)
 
-  * `.docx` (rendered as HTML)
-  * `.txt`
-  * `.csv`
-  * `.png`, `.jpg`
+- Edit support:
+  - `.txt` → plain text editor
+  - `.csv` → table/grid editor
+  - `.pdf` → view only (no edit/save support)
 
-* Edit support:
+- Drag & drop file opening
 
-  * `.txt` → plain text editor
-  * `.csv` → table/grid editor
+- Toggle between **View** and **Edit** mode
 
-* Drag & drop file opening
+- Save changes (`Ctrl + S`)
 
-* Toggle between **View** and **Edit** mode
-
-* Save changes (`Ctrl + S`)
-
-* Adapter-based architecture (easy to extend with new formats)
+- Adapter-based architecture (easy to extend with new formats)
 
 ---
 
 ## 🧱 Architecture
 
-* **DocViewer (WPF)** → UI layer
-* **DocViewer.Core** → adapters, services, logic
-* **DocViewer.Tests** → unit tests
+- **DocViewer (WPF)** → UI layer
+- **DocViewer.Core** → adapters, services, logic
+- **DocViewer.Tests** → unit tests
 
 The app uses an adapter pattern:
 
@@ -100,19 +98,19 @@ Test Explorer → Run All
 
 ## 📎 Notes
 
-* Designed for personal use
-* Focused on simplicity over full feature parity with professional editors
-* Easily extendable by adding new adapters
+- Designed for personal use
+- Focused on simplicity over full feature parity with professional editors
+- Easily extendable by adding new adapters
 
 ---
 
 ## 🔮 Future Ideas
 
-* Additional file formats (PDF, Markdown)
-* Improved CSV parsing
-* Search within documents
-* Recent files / history
-* Save As (saving in a different file)
+- Additional file formats (Markdown, others)
+- Improved CSV parsing
+- Search within documents
+- Recent files / history
+- Save As (saving in a different file)
 
 ---
 
@@ -120,7 +118,6 @@ Test Explorer → Run All
 
 ## 🔮 Known issues
 
-* Drag & Drop multiple times doesn't work (Windows default 'open file' behavior kicks in)
-* 
+- Drag & Drop multiple times doesn't work (Windows default 'open file' behavior kicks in)
 
 ---

@@ -8,6 +8,7 @@
             Txt,
             Csv,
             Image,
+            Pdf,
             Unsupported
         }
     }

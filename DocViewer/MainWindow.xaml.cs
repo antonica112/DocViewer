@@ -27,7 +27,8 @@ public partial class MainWindow : Window
             new DocxAdapter(),
             new TxtAdapter(),
             new CsvAdapter(),
-            new ImageAdapter()
+            new ImageAdapter(),
+            new PdfAdapter()
         });
     }
 
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
             ".docx" => FileType.Docx,
             ".txt" => FileType.Txt,
             ".csv" => FileType.Csv,
+            ".pdf" => FileType.Pdf,
             ".png" or ".jpg" or ".jpeg" => FileType.Image,
             _ => FileType.Unsupported
         };
@@ -108,9 +110,15 @@ public partial class MainWindow : Window
         if (_currentFilePath == null || _documentService == null)
             return;
 
-        var html = _documentService.ConvertToHtml(_currentFilePath);
-
         await Browser.EnsureCoreWebView2Async();
+
+        if (_fileType == FileType.Pdf)
+        {
+            Browser.CoreWebView2.Navigate(new Uri(_currentFilePath).AbsoluteUri);
+            return;
+        }
+
+        var html = _documentService.ConvertToHtml(_currentFilePath);
         Browser.NavigateToString(html);
     }
 
